@@ -1,0 +1,16 @@
+[
+{
+  "modid": "myfirstmod",
+  "name": "My First Mod",
+  "description": "Still don't know.",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["mcmaur"],
+  "credits": "me",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]
