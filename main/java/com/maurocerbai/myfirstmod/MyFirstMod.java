@@ -125,6 +125,7 @@ public class MyFirstMod {
 
 	public BlockPos findNearestOre() {
 		BlockPos targetPosition = null;
+		visited.clear();
 
 		EntityPlayer player = Settings.world.playerEntities.get(0);
 		// block under player feet
