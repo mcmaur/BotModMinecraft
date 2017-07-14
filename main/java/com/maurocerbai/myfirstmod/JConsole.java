@@ -57,6 +57,12 @@ public class JConsole {
 	public void appendERR(String s) {
 		append(red, "[ERROR] " + s);
 	}
+	
+	public void appendCUST(String s, Color cust) {
+		SimpleAttributeSet cst = new SimpleAttributeSet();
+		StyleConstants.setForeground(cst, cust);
+		append(cst, "[ERROR] " + s);
+	}
 
 	public void append(SimpleAttributeSet sas, String s) {
 		Calendar cal = Calendar.getInstance();

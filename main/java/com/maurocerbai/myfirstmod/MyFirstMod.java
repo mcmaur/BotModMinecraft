@@ -1,10 +1,12 @@
 package com.maurocerbai.myfirstmod;
 
 import java.awt.AWTException;
+import java.awt.Color;
 import java.awt.Robot;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -27,8 +29,11 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 @Mod(modid = Settings.MODID, version = Settings.VERSION)
 public class MyFirstMod {
 
-	private int SCANLIMIT = 10;
+	private int SCANLIMIT = 2048;
 	LinkedList<BlockWithPosition> tobescanned;
+	HashMap<String, Boolean> visited;
+	double playerPreviousPosX = 0, playerPreviousPosY = 0,
+			playerPreviousPosZ = 0;
 
 	@Instance
 	public static MyFirstMod instance = new MyFirstMod();
@@ -46,6 +51,7 @@ public class MyFirstMod {
 		// new handler.
 		JConsole.getInstance().appendINFO("Init mod");
 		tobescanned = new LinkedList<BlockWithPosition>();
+		visited = new HashMap<String, Boolean>();
 	}
 
 	@EventHandler
@@ -65,9 +71,6 @@ public class MyFirstMod {
 	public void onServerStarted(FMLServerStartedEvent event) {
 		JConsole.getInstance().appendINFO("Opened world");
 	}
-
-	double playerPreviousPosX = 0, playerPreviousPosY = 0,
-			playerPreviousPosZ = 0;
 
 	@SubscribeEvent
 	public void onLivingUpdateEvent(LivingUpdateEvent event) {
@@ -114,17 +117,14 @@ public class MyFirstMod {
 		String msg = event.getMessage();
 		JConsole.getInstance().appendINFO("Chat event: " + msg);
 		if (msg.equals(Settings.COMMANDS_NEAREST_ORE)) {
-			JConsole.getInstance().appendERR("" + findNearestOre());
+			JConsole.getInstance()
+					.appendCUST("" + findNearestOre(), Color.BLUE);
 		}
 
 	}
 
 	public BlockPos findNearestOre() {
 		BlockPos targetPosition = null;
-		
-		// players
-		List<EntityPlayer> a = Settings.world.playerEntities;
-		JConsole.getInstance().appendERR("" + a.size());
 
 		EntityPlayer player = Settings.world.playerEntities.get(0);
 		// block under player feet
@@ -140,7 +140,9 @@ public class MyFirstMod {
 		while (countwhileiteration < SCANLIMIT && !tobescanned.isEmpty()) {
 			countwhileiteration++;
 			BlockWithPosition considering = tobescanned.removeFirst();
-			JConsole.getInstance().appendERR("Scanning: " + considering);
+			JConsole.getInstance().appendCUST("Scanning: " + considering,
+					Color.GRAY);
+			visited.put(getHashKeyFromPosition(considering.pos), true);
 
 			if (isPreciousMaterial(considering)) {
 				// if the material is ore then the position will be saved
@@ -151,31 +153,52 @@ public class MyFirstMod {
 			} else {
 				// add the block nearby to the list of item to be scanned
 				BlockPos right = considering.pos.add(0, 0, 1);
-				tobescanned.add(new BlockWithPosition(Settings.world
-						.getBlockState(right).getBlock(), right));
+				addToList(right);
 
 				BlockPos left = considering.pos.add(0, 0, -1);
-				tobescanned.add(new BlockWithPosition(Settings.world
-						.getBlockState(left).getBlock(), left));
+				addToList(left);
 
 				BlockPos front = considering.pos.add(1, 0, 0);
-				tobescanned.add(new BlockWithPosition(Settings.world
-						.getBlockState(front).getBlock(), front));
+				addToList(front);
 
 				BlockPos back = considering.pos.add(-1, 0, 1);
-				tobescanned.add(new BlockWithPosition(Settings.world
-						.getBlockState(back).getBlock(), back));
+				addToList(back);
 
 				BlockPos up = considering.pos.add(0, 1, 0);
-				tobescanned.add(new BlockWithPosition(Settings.world
-						.getBlockState(up).getBlock(), up));
+				addToList(up);
 
 				BlockPos down = considering.pos.add(0, -1, 0);
-				tobescanned.add(new BlockWithPosition(Settings.world
-						.getBlockState(down).getBlock(), down));
+				addToList(down);
 			}
 		}
 		return targetPosition;
+	}
+
+	private void addToList(BlockPos ps) {
+		// add if not already visited
+		Block bl = Settings.world.getBlockState(ps).getBlock();
+		BlockWithPosition bwp = new BlockWithPosition(bl, ps);
+
+		if (visitedBlock(bwp)) {
+			//JConsole.getInstance().appendINFO("visited, not added: " + bwp);
+		} else {
+			tobescanned.add(new BlockWithPosition(bl, ps));
+		}
+	}
+
+	public boolean visitedBlock(BlockWithPosition bl) {
+		String key = getHashKeyFromPosition(bl.pos);
+		return visited.containsKey(key);
+	}
+
+	public String getHashKeyFromPosition(BlockPos pos) {
+		StringBuilder builder = new StringBuilder();
+		builder.append(pos.getX());
+		builder.append("|");
+		builder.append(pos.getY());
+		builder.append("|");
+		builder.append(pos.getZ());
+		return builder.toString();
 	}
 
 	public void emulateKey() {
