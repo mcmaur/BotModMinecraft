@@ -29,7 +29,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 @Mod(modid = Settings.MODID, version = Settings.VERSION)
 public class MyFirstMod {
 
-	private int SCANLIMIT = 2048;
+	private int SCANLIMIT = 32768;//2^15
 	LinkedList<BlockWithPosition> tobescanned;
 	HashMap<String, Boolean> visited;
 	double playerPreviousPosX = 0, playerPreviousPosY = 0,
@@ -125,9 +125,10 @@ public class MyFirstMod {
 
 	public BlockPos findNearestOre() {
 		BlockPos targetPosition = null;
+		EntityPlayer player = null;
 		visited.clear();
 
-		EntityPlayer player = Settings.world.playerEntities.get(0);
+		player = Settings.world.playerEntities.get(0);
 		// block under player feet
 		BlockPos underfeet = new BlockPos(player.posX, player.posY - 1,
 				player.posZ);
@@ -165,11 +166,17 @@ public class MyFirstMod {
 				BlockPos back = considering.pos.add(-1, 0, 1);
 				addToList(back);
 
-				BlockPos up = considering.pos.add(0, 1, 0);
-				addToList(up);
+				if (Block.getIdFromBlock(considering.block) != 0) {
+					// won't go above air -- works most of  the times --
+					BlockPos up = considering.pos.add(0, 1, 0);
+					addToList(up);
+				}
 
-				BlockPos down = considering.pos.add(0, -1, 0);
-				addToList(down);
+				if (Block.getIdFromBlock(considering.block) != 7) {
+					// won't go under bedrock
+					BlockPos down = considering.pos.add(0, -1, 0);
+					addToList(down);
+				}
 			}
 		}
 		return targetPosition;
@@ -181,7 +188,7 @@ public class MyFirstMod {
 		BlockWithPosition bwp = new BlockWithPosition(bl, ps);
 
 		if (visitedBlock(bwp)) {
-			//JConsole.getInstance().appendINFO("visited, not added: " + bwp);
+			// JConsole.getInstance().appendINFO("visited, not added: " + bwp);
 		} else {
 			tobescanned.add(new BlockWithPosition(bl, ps));
 		}
